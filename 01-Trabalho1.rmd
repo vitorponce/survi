@@ -1,0 +1,200 @@
+---
+title: "SME0821 - Análise de Sobrevivência - Atividade I"
+author: 
+  - Francisco Rosa Dias de Miranda - 4402962
+  - Heitor
+  - Lua
+  - Victor
+  - Gusthavo
+date: "abril 2022"
+output: pdf_document
+---
+  
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+1) Introdução: aqui pode descrever os dados e fonte de onde foi obtida (os dados podem vir de artigos, DATASUS, FOSP, HOSPITAIS, ESTUDOS PLANEJADOS, ETC), assim como os objetivos especificos do estudo.
+
+
+2) Metodologia: Uma breve descrisão da metodologia;
+
+3) Análise de dados 
+
+ - K-M
+ - Atuarial 
+ - Nelson-Aalen
+
+4) Bibliográfia
+
+3) Uma pasta com os dados e codigos para que o trabalho seja reproduzidos.
+
+4) Os grupos apresentaram os resultados em sala de aula.
+
+ 
+```{r include=FALSE}
+library(tidyverse)
+```
+
+```{r}
+
+df <-read_csv("churn.csv")
+```
+
+
+```{r}
+
+tempo=c(3,4,5.7,6.5,6.5,8.4,10,10,12,15)
+censura=c(1,0,0,1,1,0,1,0,1,1)
+mKM = survfit(Surv(tempo, censura) ~ 1, se.fit = FALSE)
+summary(mKM)
+```
+```{r}
+plot(mKM, mark.time=T, xlab = "Tempo", ylab = "Função de Sobrevivência", cex.axis = 1.5, cex.lab = 1.5)
+```
+
+
+## Aula 22-05
+
+```{r}
+t=c(3.1, 6.8, 9.0, 9.0, 11.3, 16.2, 8.7, 9.0 ,10.1, 12.1, 18.3,23.1)
+d=c(1, 0 ,1, 1, 0, 1, 1, 1, 0, 0 ,1, 0)
+grupo=c(1,1,1,1,1,1,2,2,2,2,2,2)
+fit=survdiff( Surv(t,d)~grupo)
+fit
+```
+```{r}
+library(KMsurv)
+data(drug6mp)
+drug6mp[1:7, ]
+
+time=c(drug6mp$t1,drug6mp$t2)
+irelapse=c(rep(1,21),drug6mp$relapse)
+grupo=c(rep(1,21),rep(2,21))
+fit=survdiff( Surv( time, irelapse )~grupo)
+```
+
+```{r}
+
+library(survminer)
+
+ggsurvplot(mKM,
+            pval = TRUE,
+            xlab = "Tempo em meses",
+            ylab="Funçao de sobrevivencia",
+            break.time.by = 2,
+            risk.table = "abs_pct", # indivı́duos em risco.
+            surv.median.line = "hv", # sobrevivencia mediana,
+            legend.labs = levels(as.factor(larynx$stage) ))
+```
+
+```{r}
+res <- pairwise_survdiff(Surv(time,delta)~stage,data=larynx,
+                  p.adjust.method = "none")
+res
+```
+
+```{r}
+ggsurvplot_facet(fit0,dad, facet.by = "idade",
+palette = "jco", surv.median.line = "hv",pval = TRUE)
+```
+
+
+
+aula 21-06
+
+```{r}
+U_alpha=function(vpar,t){
+alpha=vpar[1]
+n=length(t)
+lambda=n/sum(t^alpha)
+U1=n/alpha-lambda*sum(t^alpha*log(t))+sum(log(t))
+U1
+}
+## uniroot: determina o zero de uma funç~
+ao
+alpha_m <- uniroot(U_alpha, interval=c(0.0000,20), tol = 0
+lambda_m=length(t)/sum(t^alpha_m)
+EMV=c(alpha_m,lambda_m)
+U(vpar)
+```
+
+
+```{r}
+## Matriz de Informaç~
+ao observada
+I=function(vpar){
+alpha=vpar[1]
+lambda=vpar[2]
+n=length(t)
+I11=n/alpha^2+lambda*sum(t^alpha*(log(t))^2)
+I12=sum((t^alpha*log(t)))
+I22=n/lambda^2
+I=matrix(c(I11,I12,I12,I22),2,2)
+I=
+}
+```
+
+```{r}
+# Vetor escore
+U=function(vpar){
+alpha=vpar[1]
+lambda=vpar[2]
+n=length(t)
+U1=n/alpha-lambda*sum((t^alpha)*log(t))+sum(log(t))
+U2=n/lambda-sum(t^alpha)
+U=rbind(U1,U2)
+U
+}
+# A funç~
+ao de verossimilhança
+like=function(vpar){
+alpha=(vpar[1])
+lambda=(vpar[2])
+n=length(t)
+vf=alpha*lambda*t^(alpha-1)*exp(-lambda*t^alpha)
+like=sum(log(vf))
+like
+}
+```
+
+```{r}
+N_R=function(vpar,nmax=300, stoptol=0.0000001){
+iter = 0
+newpar = vpar
+oldpar = vpar+ 0.1
+while(iter < nmax & sqrt(sum((newpar - oldpar)^2)) >stoptol) {
+  oldpar = newpar
+  newpar = oldpar+solve(I(oldpar))%*%U(oldpar)
+  iter = iter + 1
+  print(iter)
+  list(par=newpar, fun=like(newpar), COV=I(newpar))
+}
+saida=list(par=newpar, fun=like(newpar), SCORE=U(newpar),COV=s
+saida
+}
+NR=N_R(vpar)
+```
+
+
+```{r}
+emv=fit1$icoef # estimativas de mu and log sigma
+mu=emv[1]
+sigma=exp(emv[2])
+alpha=1/sigma
+lambda=exp(-mu/sigma)
+mv=c(alpha,lambda)
+cov1=fit1$var #Matriz variância e covariância da EMV de mu and log sigma
+```
+
+```{r}
+library(msm)
+EP=deltamethod(list( 1/exp(x2), exp(-x1/exp(x2))), emv, cov1)
+LI=mv-1.96*EP
+LS=mv+1.96*EP
+Est=cbind(mv,dm,LI, LS)
+rownames(Est)=c("Alpha","Lambda")
+colnames(Est)=c("EMV","EP","LI","LS")
+print(round(Est,5))
+```
+
