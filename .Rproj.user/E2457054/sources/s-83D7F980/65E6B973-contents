@@ -30,6 +30,7 @@ Conjunto de dados utilizado
 
 ```{r}
 df <- survminer::myeloma
+View(df)
 ```
 
 Multiple Myeloma Data
