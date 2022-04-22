@@ -14,7 +14,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = TRUE)
 ```
 
-## Introdução
+# 1) Introdução
 
 aqui pode descrever os dados e fonte de onde foi obtida (os dados podem vir de artigos, DATASUS, FOSP, HOSPITAIS, ESTUDOS PLANEJADOS, ETC), assim como os objetivos especificos do estudo.
 
@@ -81,13 +81,12 @@ Gene expression
 The remaining columns (CCND1, CRIM1, DEPDC1, IRF4, TP53, WHSC1) correspond to the gene expression level of specified genes.
 
 
-
-2) Metodologia: Uma breve descrição da metodologia;
+# 2) Metodologia: Uma breve descrição da metodologia;
 
 metodologia não paramétrica a dados  de sobrevivência em presença de censura 
 
 
-3) Análise de dados 
+# 3) Análise de dados 
 
  - K-M
  - Atuarial 
@@ -95,8 +94,112 @@ metodologia não paramétrica a dados  de sobrevivência em presença de censura
  - EMV
  - Newton-Rapson
  - Testes de hipotese
+ 
+ ###############################################################
+ 
+ I) *K-M Algoritmo*
+ 
+```{r}
+km_fit <- survfit(Surv(df$time, df$event) ~ 1)
+```
+ 
+```{r}
+ggsurvplot(km_fit, data = df, risk.table = FALSE)
+```
 
-4) Bibliográfia
+```{r}
+summary_table <- summary(km_fit, times = c(0,1:70))
+```
+ 
+##### Determining the optimal cutpoint for each gene expression
+
+```{r}
+res.cut <- surv_cutpoint(df, time = "time", event = "event",
+                         variables = c("CRIM1", "DEPDC1", "WHSC1",
+                                       "CCND1", "IRF4", "TP53"))
+
+summary(res.cut)
+```
+
+Plot of each cutpoint
+
+```{r}
+genes <- c("CCND1", "CRIM1","DEPDC1", "IRF4", "TP53", "WHSC1")
+
+#plotando a distribuicao de cada gene
+
+for(gene in genes){
+  print(plot(res.cut, gene, pallete = "npg"))
+}
+
+# plot(res.cut, "CRIM1", pallete = "npg")
+
+
+
+```
+
+Categorizing the variables
+
+```{r}
+res.cat <- surv_categorize(res.cut)
+head(res.cat)
+```
+
+##### Fitting Survival Curves for each gene expression
+
+```{r}
+splots
+```
+
+
+```{r}
+#defyning each fit for each gene
+
+fit1 <- survfit(Surv(time, event) ~ CCND1, data = res.cat)
+fit2 <- survfit(Surv(time, event) ~ CRIM1, data = res.cat)
+fit3 <- survfit(Surv(time, event) ~ DEPDC1, data = res.cat)
+fit4 <- survfit(Surv(time, event) ~ IRF4, data = res.cat)
+fit5 <- survfit(Surv(time, event) ~ TP53, data = res.cat)
+fit6 <- survfit(Surv(time, event) ~ WHSC1, data = res.cat)
+
+
+#List of ggsurvplots
+splots <- list()
+
+splots[[1]] <- ggsurvplot(fit1, data = df, risk.table = TRUE, risk.table.height = 0.3,
+                          ggtheme = theme_minimal())
+splots[[2]] <- ggsurvplot(fit2, data = df, risk.table = TRUE, risk.table.height = 0.3,
+                          ggtheme = theme_minimal())
+splots[[3]] <- ggsurvplot(fit3, data = df, risk.table = TRUE, risk.table.height = 0.3,
+                          ggtheme = theme_minimal())
+splots[[4]] <- ggsurvplot(fit4, data = df, risk.table = TRUE, risk.table.height = 0.3,
+                          ggtheme = theme_minimal())
+splots[[5]] <- ggsurvplot(fit5, data = df, risk.table = TRUE, risk.table.height = 0.3,
+                          ggtheme = theme_minimal())
+splots[[6]] <- ggsurvplot(fit6, data = df, risk.table = TRUE, risk.table.height = 0.3,
+                          ggtheme = theme_minimal())
+
+#arrange multiple ggsurvplots
+arrange_ggsurvplots(splots, print = TRUE, 
+                    ncol = 3, nrow = 2)
+
+if (TRUE) {
+# Arrange and save into pdf file
+res <- arrange_ggsurvplots(splots, print = FALSE)
+ggsave("myfile.pdf", res)
+}
+```
+
+
+###### **Ratio of Distribution of Event Times**
+
+```{r}
+surv <- ggsurvevents()
+```
+
+
+
+# 4) Bibliográfia
 
 
 ```{r}
@@ -104,9 +207,9 @@ citation("survminer")
 ```
 
 
-3) Uma pasta com os dados e codigos para que o trabalho seja reproduzidos.
+# 5) Uma pasta com os dados e codigos para que o trabalho seja reproduzidos.
 
-4) Os grupos apresentaram os resultados em sala de aula.
+# 6) Os grupos apresentaram os resultados em sala de aula.
 
 
 ### Codigos que o prof passou
