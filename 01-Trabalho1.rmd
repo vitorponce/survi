@@ -32,46 +32,50 @@ Conjunto de dados utilizado
 df <- survminer::myeloma
 ```
 
-Multiple Myeloma Data
-Description
+## **Multiple Myeloma Data**
+
+### Description
 Multiple Myeloma data extracted from publicly available gene expression data (GEO Id: GSE4581).
 
 Usage
 data("myeloma")
-Format
+
+**Format**
 A data frame with 256 rows and 12 columns.
 
-molecular_group
+#### **Variables**
+
+* molecular_group
 Patients' molecular subgroups
 
-chr1q21_status
+* chr1q21_status
 Amplification status of the chromosome 1q21
 
-treatment
-treatment
+* treatment
+All patients were assigned to a TT2 (Total Therapy 2) treatment
 
-event
+* event
 survival status 0 = alive, 1 = dead
 
-time
+* time
 Survival time in months
 
-CCND1
+* CCND1
 Gene expression
 
-CRIM1
+* CRIM1
 Gene expression
 
-DEPDC1
+* DEPDC1
 Gene expression
 
-IRF4
+* IRF4
 Gene expression
 
-TP53
+* TP53
 Gene expression
 
-WHSC1
+* WHSC1
 Gene expression
 
 The remaining columns (CCND1, CRIM1, DEPDC1, IRF4, TP53, WHSC1) correspond to the gene expression level of specified genes.
