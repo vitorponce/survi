@@ -11,113 +11,98 @@ output: pdf_document
 ---
   
 ```{r setup, include=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
-```
-
-# 1) Introdução
-
-aqui pode descrever os dados e fonte de onde foi obtida (os dados podem vir de artigos, DATASUS, FOSP, HOSPITAIS, ESTUDOS PLANEJADOS, ETC), assim como os objetivos especificos do estudo.
-
-
- 
-```{r include=FALSE}
 library(tidyverse)
 library(survival)
 library(survminer)
 ```
 
-Conjunto de dados utilizado
+# 1) Introdução
+
+O mieloma múltiplo é o câncer que afeta aos plasmócitos, células da medula óssea responsáveis pela produção de anticorpos. Nos indivíduos acometidos, os plasmócitos são anormais e se multiplicam rapidamente, comprometendo a produção das outras células do sangue. 
+
+Foram obtidos medidas de expressão gênica em indivíduos com mieloma múltiplo, a partir de bases disponíveis no GEO (Id: GSE4581), um repositório de dados genômicos públicos do NCBI (National Center for Biotechnology Information). Nesse estudo, foram coletados dados de uma amostra de 256 pacientes, consistindo nas 11 colunas descritas abaixo:
+
+|Variável   | Descrição  |
+|-----------|------------|
+| `molecular_group`  | Subgrupos moleculares dos pacientes |
+| `chr1q21_status`   | Status de amplificação do cromossomo 1q21 |
+| `treatment`        | Todos os pacientes receberam o tratamento TT2|
+| `event`            | Status de sobrevivência, 0 = vivo, 1 = morto |
+| `time`            |  Tempo de sobrevivência, em meses |
+| `CCND1`, `CRIM1`, | |
+|`DEPDC1`, `IRF4` |    Nível de expressão dos respectivos genes|
+|`TP53`,  `WHSC1` |  |
+
+
 
 ```{r}
-df <- survminer::myeloma
+# Conjunto de dados utilizado
+df <- survminer::myeloma %>% rownames_to_column %>% tibble
+head(df)
 ```
 
-## **Multiple Myeloma Data**
 
-### Description
-Multiple Myeloma data extracted from publicly available gene expression data (GEO Id: GSE4581).
+```{r}
+## trocar por tempo vs raiz quadrada da contagem
+  df %>% 
+ggplot(aes(x=1:nrow(df), y=time)) +
+  geom_segment( aes(x=1:nrow(df), xend=1:nrow(df), y=0, yend=time, color=event)) +
+  geom_point( aes(color=event), size=4, alpha=0.6) +
+  scale_color_binned() +
+  theme_light() +
+  coord_flip() +
+  theme(
+    panel.grid.major.y = element_blank(),
+    panel.border = element_blank(),
+    axis.ticks.y = element_blank()
+  )
+```
 
-Usage
-data("myeloma")
-
-**Format**
-A data frame with 256 rows and 12 columns.
-
-#### **Variables**
-
-* molecular_group
-Patients' molecular subgroups
-
-* chr1q21_status
-Amplification status of the chromosome 1q21
-
-* treatment
-All patients were assigned to a TT2 (Total Therapy 2) treatment
-
-* event
-survival status 0 = alive, 1 = dead
-
-* time
-Survival time in months
-
-* CCND1
-Gene expression
-
-* CRIM1
-Gene expression
-
-* DEPDC1
-Gene expression
-
-* IRF4
-Gene expression
-
-* TP53
-Gene expression
-
-* WHSC1
-Gene expression
-
-The remaining columns (CCND1, CRIM1, DEPDC1, IRF4, TP53, WHSC1) correspond to the gene expression level of specified genes.
 
 
 # 2) Metodologia: Uma breve descrição da metodologia;
 
-metodologia não paramétrica a dados  de sobrevivência em presença de censura 
+Nesse trabalho, nosso objetivo é a análise de dados de sobrevivência com censura a direita a partir de uma abordagem não-paramétrica, em que o interesse é identificar fatores de prognóstico para o mioma múltiplo a partir da amostra coletada.
+
+A análise de sobrevivência tem como objetivo a identificação de Neste estudo, utilizamos metodologia não paramétrica a dados  de sobrevivência em presença de censura 
 
 
 # 3) Análise de dados 
 
- - K-M
- - Atuarial 
- - Nelson-Aalen
- - EMV
- - Newton-Rapson
- - Testes de hipotese
+
+
+ - [-] K-M
+ - [ ] Atuarial 
+ - [ ] Nelson-Aalen
+ - [ ] EMV
+ - [ ] Newton-Rapson
+ - [ ] Testes de hipotese
  
  ###############################################################
  
  I) *K-M Algoritmo*
  
 ```{r}
-km_fit <- survfit(Surv(df$time, df$event) ~ 1)
-```
- 
-```{r}
-ggsurvplot(km_fit, data = df, risk.table = FALSE)
+  km_fit <- survfit(Surv(time, event) ~ 0, data = df)
 ```
 
 ```{r}
-summary_table <- summary(km_fit, times = c(0,1:70))
+ggsurvplot(km_fit)
+```
+ 
+
+
+```{r}
+summary(km_fit, times = c(0,1:70))
 ```
  
 ##### Determining the optimal cutpoint for each gene expression
 
-```{r}
+```{r m}
 res.cut <- surv_cutpoint(df, time = "time", event = "event",
                          variables = c("CRIM1", "DEPDC1", "WHSC1",
-                                       "CCND1", "IRF4", "TP53"))
-
+                                       "CCND1", "IRF4", "TP53"),
+                         progressbar = FALSE)
 summary(res.cut)
 ```
 
@@ -125,17 +110,11 @@ Plot of each cutpoint
 
 ```{r}
 genes <- c("CCND1", "CRIM1","DEPDC1", "IRF4", "TP53", "WHSC1")
-
 #plotando a distribuicao de cada gene
-
 for(gene in genes){
   print(plot(res.cut, gene, pallete = "npg"))
 }
-
 # plot(res.cut, "CRIM1", pallete = "npg")
-
-
-
 ```
 
 Categorizing the variables
@@ -148,24 +127,20 @@ head(res.cat)
 ##### Fitting Survival Curves for each gene expression
 
 ```{r}
-splots
+#splots
 ```
 
 
 ```{r}
 #defyning each fit for each gene
-
 fit1 <- survfit(Surv(time, event) ~ CCND1, data = res.cat)
 fit2 <- survfit(Surv(time, event) ~ CRIM1, data = res.cat)
 fit3 <- survfit(Surv(time, event) ~ DEPDC1, data = res.cat)
 fit4 <- survfit(Surv(time, event) ~ IRF4, data = res.cat)
 fit5 <- survfit(Surv(time, event) ~ TP53, data = res.cat)
 fit6 <- survfit(Surv(time, event) ~ WHSC1, data = res.cat)
-
-
 #List of ggsurvplots
 splots <- list()
-
 splots[[1]] <- ggsurvplot(fit1, data = df, risk.table = TRUE, risk.table.height = 0.3,
                           ggtheme = theme_minimal())
 splots[[2]] <- ggsurvplot(fit2, data = df, risk.table = TRUE, risk.table.height = 0.3,
@@ -178,11 +153,9 @@ splots[[5]] <- ggsurvplot(fit5, data = df, risk.table = TRUE, risk.table.height 
                           ggtheme = theme_minimal())
 splots[[6]] <- ggsurvplot(fit6, data = df, risk.table = TRUE, risk.table.height = 0.3,
                           ggtheme = theme_minimal())
-
 #arrange multiple ggsurvplots
 arrange_ggsurvplots(splots, print = TRUE, 
                     ncol = 3, nrow = 2)
-
 if (TRUE) {
 # Arrange and save into pdf file
 res <- arrange_ggsurvplots(splots, print = FALSE)
@@ -194,176 +167,33 @@ ggsave("myfile.pdf", res)
 ###### **Ratio of Distribution of Event Times**
 
 ```{r}
-surv <- ggsurvevents()
-```
-
-
-
-# 4) Bibliográfia
-
-
-```{r}
-citation("survminer")
-```
-
-
-# 5) Uma pasta com os dados e codigos para que o trabalho seja reproduzidos.
-
-# 6) Os grupos apresentaram os resultados em sala de aula.
-
-
-### Codigos que o prof passou
-
-
-```{r}
-
-tempo=c(3,4,5.7,6.5,6.5,8.4,10,10,12,15)
-censura=c(1,0,0,1,1,0,1,0,1,1)
-mKM = survfit(Surv(tempo, censura) ~ 1, se.fit = FALSE)
-summary(mKM)
-```
-```{r}
-plot(mKM, mark.time=T, xlab = "Tempo", ylab = "Função de Sobrevivência", cex.axis = 1.5, cex.lab = 1.5)
-```
-
-
-## Aula 22-05
-
-```{r}
-t=c(3.1, 6.8, 9.0, 9.0, 11.3, 16.2, 8.7, 9.0 ,10.1, 12.1, 18.3,23.1)
-d=c(1, 0 ,1, 1, 0, 1, 1, 1, 0, 0 ,1, 0)
-grupo=c(1,1,1,1,1,1,2,2,2,2,2,2)
-fit=survdiff( Surv(t,d)~grupo)
-fit
-```
-```{r}
-library(KMsurv)
-data(drug6mp)
-drug6mp[1:7, ]
-
-time=c(drug6mp$t1,drug6mp$t2)
-irelapse=c(rep(1,21),drug6mp$relapse)
-grupo=c(rep(1,21),rep(2,21))
-fit=survdiff( Surv( time, irelapse )~grupo)
-```
-
-```{r}
-
-library(survminer)
-
-ggsurvplot(mKM,
-            pval = TRUE,
-            xlab = "Tempo em meses",
-            ylab="Funçao de sobrevivencia",
-            break.time.by = 2,
-            risk.table = "abs_pct", # indivı́duos em risco.
-            surv.median.line = "hv", # sobrevivencia mediana,
-            legend.labs = levels(as.factor(larynx$stage) ))
-```
-
-```{r}
-res <- pairwise_survdiff(Surv(time,delta)~stage,data=larynx,
-                  p.adjust.method = "none")
-res
-```
-
-```{r}
-ggsurvplot_facet(fit0,dad, facet.by = "idade",
-palette = "jco", surv.median.line = "hv",pval = TRUE)
-```
-
-
-
-aula 21-06
-
-```{r}
-U_alpha=function(vpar,t){
-alpha=vpar[1]
-n=length(t)
-lambda=n/sum(t^alpha)
-U1=n/alpha-lambda*sum(t^alpha*log(t))+sum(log(t))
-U1
-}
-## uniroot: determina o zero de uma funçao
-alpha_m <- uniroot(U_alpha, interval=c(0.0000,20), tol = 0)
-lambda_m=length(t)/sum(t^alpha_m)
-EMV=c(alpha_m,lambda_m)
-U(vpar)
+#surv <- ggsurvevents()
 ```
 
 
 ```{r}
-## Matriz de Informaçao observada
-I=function(vpar){
-alpha=vpar[1]
-lambda=vpar[2]
-n=length(t)
-I11=n/alpha^2+lambda*sum(t^alpha*(log(t))^2)
-I12=sum((t^alpha*log(t)))
-I22=n/lambda^2
-I=matrix(c(I11,I12,I12,I22),2,2)
-}
-```
+  fit <- survfit(Surv(time, event) ~ chr1q21_status, data = df)
 
-```{r}
-# Vetor escore
-U=function(vpar){
-alpha=vpar[1]
-lambda=vpar[2]
-n=length(t)
-U1=n/alpha-lambda*sum((t^alpha)*log(t))+sum(log(t))
-U2=n/lambda-sum(t^alpha)
-U=rbind(U1,U2)
-U
-}
-# A funçao de verossimilhança
-like=function(vpar){
-alpha=(vpar[1])
-lambda=(vpar[2])
-n=length(t)
-vf=alpha*lambda*t^(alpha-1)*exp(-lambda*t^alpha)
-like=sum(log(vf))
-like
-}
-```
-
-```{r}
-N_R=function(vpar,nmax=300, stoptol=0.0000001){
-  iter = 0
-  newpar = vpar
-  oldpar = vpar+ 0.1
-  while(iter < nmax & sqrt(sum((newpar - oldpar)^2)) >stoptol) {
-    oldpar = newpar
-    newpar = oldpar+solve(I(oldpar))%*%U(oldpar)
-    iter = iter + 1
-    print(iter)
-    list(par=newpar, fun=like(newpar), COV=I(newpar))
-  }
-  saida=list(par=newpar, fun=like(newpar), SCORE=U(newpar))
-  saida
-}
-NR=N_R(vpar)
+ggsurvplot(
+   fit,                     # survfit object with calculated statistics.
+   data = df,  # data used to fit survival curves. 
+   risk.table = TRUE,       # show risk table.
+   pval = TRUE,             # show p-value of log-rank test.
+   conf.int = TRUE,         # show confidence intervals for 
+                            # point estimaes of survival curves.
+   xlim = c(0,65),        # present narrower X axis, but not affect
+                            # survival estimates.
+   break.time.by = 5,     # break X axis in time intervals by 500.
+   ggtheme = theme_minimal(), # customize plot and risk table with a theme.
+ risk.table.y.text.col = T, # colour risk table text annotations.
+  risk.table.y.text = FALSE # show bars instead of names in text annotations
+                            # in legend of risk table
+)
 ```
 
 
-```{r}
-emv=fit1$icoef # estimativas de mu and log sigma
-mu=emv[1]
-sigma=exp(emv[2])
-alpha=1/sigma
-lambda=exp(-mu/sigma)
-mv=c(alpha,lambda)
-cov1=fit1$var #Matriz variância e covariância da EMV de mu and log sigma
-```
+## Referências
 
-```{r}
-library(msm)
-EP=deltamethod(list( 1/exp(x2), exp(-x1/exp(x2))), emv, cov1)
-LI=mv-1.96*EP
-LS=mv+1.96*EP
-Est=cbind(mv,dm,LI, LS)
-rownames(Est)=c("Alpha","Lambda")
-colnames(Est)=c("EMV","EP","LI","LS")
-print(round(Est,5))
-```
+- Noll, J.E., Vandyke, K., Hewett, D.R. et al. PTTG1 expression is associated with hyperproliferative disease and poor prognosis in multiple myeloma. J Hematol Oncol 8, 106 (2015). https://doi.org/10.1186/s13045-015-0209-2
 
+- João, Cristina et al. “Long-term survival in multiple myeloma.” Clinical case reports vol. 2,5 (2014): 173-9. doi:10.1002/ccr3.76
