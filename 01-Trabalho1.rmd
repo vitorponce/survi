@@ -4,7 +4,7 @@ author:
   - Francisco Rosa Dias de Miranda - 4402962
   - Heitor Carvalho Pinheiro - 11833351
   - Lua
-  - Victor
+  - Vitor
   - Gusthavo
 date: "abril 2022"
 output: pdf_document
