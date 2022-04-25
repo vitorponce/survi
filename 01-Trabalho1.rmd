@@ -38,17 +38,31 @@ Foram obtidos medidas de expressão gênica em indivíduos com mieloma múltiplo
 ```{r}
 # Conjunto de dados utilizado
 df <- survminer::myeloma %>% rownames_to_column %>% tibble
+df$event <- as.logical(df$event)
 head(df)
 ```
 
 
 ```{r}
 ## trocar por tempo vs raiz quadrada da contagem
+gex_cols <- c("CCND1", "CRIM1", "DEPDC1","IRF4","TP53","WHSC1")  
+
+df %>% pivot_longer(cols = gex_cols) %>% 
+ggplot(aes(y=time, x=sqrt(value))) +
+  geom_point( aes(color=event), alpha=0.6) +
+  facet_wrap(~name, scales = "free_x") +
+  labs(x = "Raiz quadrada da contagem",
+       y = "Tempo",
+       color = "Censura",
+       title = "Expressão gênica versus tempo de censura")
+```
+
+```{r}
+## trocar por tempo vs raiz quadrada da contagem
   df %>% 
 ggplot(aes(x=1:nrow(df), y=time)) +
-  geom_segment( aes(x=1:nrow(df), xend=1:nrow(df), y=0, yend=time, color=event)) +
+  geom_segment( aes(x=1:nrow(df), xend=1:nrow(df), y=0, yend=time)) +
   geom_point( aes(color=event), size=4, alpha=0.6) +
-  scale_color_binned() +
   theme_light() +
   coord_flip() +
   theme(
@@ -191,6 +205,10 @@ ggsurvplot(
 )
 ```
 
+```{r}
+# estimativas de nelson aalen
+plot(-log(fit$surv))
+```
 
 ## Referências
 
