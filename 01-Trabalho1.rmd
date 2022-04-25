@@ -3,7 +3,7 @@ title: "SME0821 - Análise de Sobrevivência - Atividade I"
 author: 
   - Francisco Rosa Dias de Miranda - 4402962
   - Heitor Carvalho Pinheiro - 11833351
-  - Lua
+  - Lua Nardi Quito - 11371270
   - Victor
   - Gusthavo
 date: "abril 2022"
